@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useState } from "react";
 import "./App.css";
-import { Vortex } from "./components/ui/vortex";
 import { Button } from "./components/ui/button";
-import React from "react";
 import { PlaceholdersAndVanishInput } from "./components/ui/placeholders-and-vanish-input";
+import { Vortex } from "./components/ui/vortex";
 
 enum AppState {
   LandingPage = "LandingPage",
