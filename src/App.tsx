@@ -4,8 +4,9 @@ import { Button } from "./components/ui/button";
 import { PlaceholdersAndVanishInput } from "./components/ui/placeholders-and-vanish-input";
 import { Vortex } from "./components/ui/vortex";
 import { PlaceholdersInput } from "./components/ui/placeholders-input";
-import { AppState, InputState, ScheduleInput } from "./lib/types/types";
+import { AppState, Game, InputState, ScheduleInput } from "./lib/types/types";
 import { generateSchedule } from "./lib/helpers/generateSchedule";
+import ScheduleTable from "./components/ScheduleTable";
 
 function App() {
   const [appState, setAppState] = useState<AppState>(AppState.LandingPage);
@@ -14,35 +15,22 @@ function App() {
     teams: [],
     times: { startTime: "", gameLength: 0, timeBetweenGames: 0 },
     courts: 1,
-    rounds: 1,
+    gamesPerTeam: 1,
   });
+  const [schedule, setSchedule] = useState<Game[]>([]);
   const [currentTeamInput, setCurrentTeamInput] = useState("");
   const [currentStartTimeInput, setCurrentStartTimeInput] = useState("09:00");
   const [currentGameLength, setCurrentGameLength] = useState(30);
   const [currentTimeBetweenGames, setCurrentTimeBetweenGames] = useState(5);
   const [numberOfCourts, setNumberOfCourts] = useState(1);
-  const [numberOfRounds, setNumberOfRounds] = useState(1);
-
-  useEffect(() => {
-    const input: ScheduleInput = {
-      teams: ["Alpha", "Beta", "Charlie", "Delta", "Echo", "Foxtrot"],
-      times: {
-        startTime: "19:10",
-        gameLength: 20,
-        timeBetweenGames: 0,
-      },
-      courts: 2, // Two courts available
-      rounds: 1, // One round
-    };
-    const schedule = generateSchedule(input);
-    // console.log("\n\t schedule", schedule);
-  }, []);
+  const [numberOfGamesPerTeam, setNumberOfGamesPerTeam] = useState(1);
 
   useEffect(() => {
     if (inputState === InputState.Completed) {
-      const schedule = generateSchedule(scheduleInput);
-      console.log("\n\t schedule", schedule);
-
+      const generatedSchedule = generateSchedule(scheduleInput);
+      console.log("\n\t scheduleInput", scheduleInput);
+      console.log("\n\t generatedSchedule", generatedSchedule);
+      setSchedule(generatedSchedule);
       setAppState(AppState.Generated);
     }
   }, [inputState]);
@@ -53,7 +41,7 @@ function App() {
       teams: [],
       times: { startTime: "", gameLength: 0, timeBetweenGames: 0 },
       courts: 1,
-      rounds: 1,
+      gamesPerTeam: 1,
     });
   };
 
@@ -146,14 +134,22 @@ function App() {
   const roundNumberPlaceholders = ["Enter the number of rounds"];
 
   const handleRoundInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNumberOfRounds(Number(e.target.value));
+    setNumberOfGamesPerTeam(Number(e.target.value));
   };
 
   const onSubmitRounds = () => {
     const updatedScheduleInput = scheduleInput;
-    updatedScheduleInput.rounds = numberOfRounds;
+    updatedScheduleInput.gamesPerTeam = numberOfGamesPerTeam;
     setScheduleInput(updatedScheduleInput);
-    setNumberOfRounds(0);
+    setNumberOfGamesPerTeam(0);
+    setInputState(InputState.Completed);
+  };
+
+  const onClickFill = () => {
+    const updatedScheduleInput = scheduleInput;
+    updatedScheduleInput.gamesPerTeam = "FILL";
+    setScheduleInput(updatedScheduleInput);
+    setNumberOfGamesPerTeam(0);
     setInputState(InputState.Completed);
   };
 
@@ -292,15 +288,20 @@ function App() {
             {inputState === InputState.Rounds && (
               <div className="flex flex-col space-y-4 max-w-[450px] w-[100%]">
                 <h3 className="text-white text-xl md:text-6xl font-bold text-center">
-                  Rounds
+                  Games per team
                 </h3>
                 <p className="text-white text-sm md:text-2xl max-w-xl mt-6 text-center">
-                  How many rounds will be played?
+                  How many games will each team play?
                 </p>
                 <PlaceholdersInput
                   placeholders={roundNumberPlaceholders}
                   onChange={handleRoundInput}
                 />
+                <Button className="h-12 mb-4" onClick={onClickFill}>
+                  <text className="text-white font-bold text-xl px-12 py-8">
+                    Fill
+                  </text>
+                </Button>
                 <Button className="h-12 mb-4" onClick={onSubmitRounds}>
                   <text className="text-white font-bold text-xl px-12 py-8">
                     NEXT
@@ -321,6 +322,8 @@ function App() {
             <h3 className="text-white text-xl md:text-6xl font-bold text-center">
               Here is your schedule
             </h3>
+
+            <ScheduleTable games={schedule} />
 
             <Button className="h-12" onClick={handleExit}>
               <text className="text-white font-bold text-xl px-12 py-8">

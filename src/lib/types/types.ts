@@ -2,7 +2,7 @@ export interface ScheduleInput {
   teams: string[];
   times: { startTime: string; gameLength: number; timeBetweenGames: number };
   courts: number;
-  rounds: number;
+  gamesPerTeam: number | string;
 }
 
 export enum AppState {

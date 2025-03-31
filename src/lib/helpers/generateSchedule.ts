@@ -1,27 +1,7 @@
 import { ScheduleInput, Game } from "../types/types";
 
-/**
- * Generates a schedule for a sports event, ensuring even distribution of games across teams, courts, and rounds.
- *
- * @param {ScheduleInput} input - The input object containing teams, times, courts, and rounds.
- * @returns {Game[]} - An array of Game objects representing the generated schedule.
- *
- * @example
- * const input = {
- * teams: ["Team A", "Team B", "Team C", "Team D"],
- * times: { startTime: "10:00", gameLength: 60, timeBetweenGames: 15 },
- * courts: 2,
- * rounds: 1,
- * };
- * const schedule = generateSchedule(input);
- *  Example output:
- *  [
- *    { "team1": "Team A", "team2": "Team D", "court": 1, "startTime": "10:00", "endTime": "11:00", "round": 1 },
- *    { "team1": "Team B", "team2": "Team C", "court": 2, "startTime": "10:00", "endTime": "11:00", "round": 1 }
- *  ]
- */
 export const generateSchedule = (input: ScheduleInput): Game[] => {
-  const { teams, times, courts, rounds } = input;
+  const { teams, times, courts, gamesPerTeam } = input;
   const numTeams = teams.length;
   const games: Game[] = [];
 
@@ -29,104 +9,100 @@ export const generateSchedule = (input: ScheduleInput): Game[] => {
     return [];
   }
 
-  if (rounds > 0 && numTeams > 1) {
-    let pairings: [string, string][] = [];
+  let targetGamesPerTeam =
+    gamesPerTeam === "FILL" ? numTeams - 1 : Number(gamesPerTeam);
+  targetGamesPerTeam = Math.min(targetGamesPerTeam, numTeams - 1);
 
-    for (let round = 1; round <= rounds; round++) {
-      let roundPairings: [string, string][] = [];
-      const roundTeams = [...teams];
+  const teamGameCounts: { [team: string]: number } = {};
+  teams.forEach((team) => (teamGameCounts[team] = 0));
 
-      if (numTeams % 2 !== 0) {
-        roundTeams.push("BYE");
-      }
+  const playedMatches: Set<string> = new Set();
+  const teamTimeSlots: {
+    [team: string]: { startTime: string; endTime: string }[];
+  } = {};
+  teams.forEach((team) => (teamTimeSlots[team] = []));
 
-      const numRoundTeams = roundTeams.length;
+  let gameIndex = 0;
+  let currentTime = times.startTime;
 
-      for (let i = 0; i < numRoundTeams / 2; i++) {
-        if (
-          roundTeams[i] !== "BYE" &&
-          roundTeams[numRoundTeams - 1 - i] !== "BYE"
-        ) {
-          roundPairings.push([
-            roundTeams[i],
-            roundTeams[numRoundTeams - 1 - i],
-          ]);
-        }
-      }
-
-      pairings = pairings.concat(roundPairings);
-
-      if (numTeams % 2 === 0) {
-        const first = roundTeams[0];
-        roundTeams.shift();
-        roundTeams.push(first);
-      } else {
-        const first = roundTeams[0];
-        const last = roundTeams[numRoundTeams - 1];
-        roundTeams.shift();
-        roundTeams.pop();
-        roundTeams.splice(1, 0, last);
-        roundTeams.unshift(first);
-      }
-    }
-
-    let currentTime = times.startTime;
+  while (teams.some((team) => teamGameCounts[team] < targetGamesPerTeam)) {
+    let availableTeams = [...teams];
     let courtIndex = 1;
-    let roundIndex = 1;
-    let gameIndex = 0;
-    let gamesInRound = 0;
 
-    for (const pairing of pairings) {
-      if (pairing[0] !== "BYE" && pairing[1] !== "BYE") {
-        const startTime = currentTime;
-        const endTime = calculateEndTime(startTime, times.gameLength);
+    while (courtIndex <= courts && availableTeams.length >= 2) {
+      let gameScheduled = false;
 
-        games.push({
-          team1: pairing[0],
-          team2: pairing[1],
-          court: courtIndex,
-          startTime: startTime,
-          endTime: endTime,
-          round: roundIndex,
-        });
+      for (let i = 0; i < availableTeams.length; i++) {
+        for (let j = i + 1; j < availableTeams.length; j++) {
+          const team1 = availableTeams[i];
+          const team2 = availableTeams[j];
 
-        courtIndex++;
-        gameIndex++;
-        gamesInRound++;
+          if (
+            teamGameCounts[team1] < targetGamesPerTeam &&
+            teamGameCounts[team2] < targetGamesPerTeam
+          ) {
+            const matchKey = [team1, team2].sort().join("-");
 
-        if (courtIndex > courts) {
-          courtIndex = 1;
-          currentTime = calculateNextStartTime(endTime, times.timeBetweenGames);
+            if (!playedMatches.has(matchKey)) {
+              const endTime = calculateEndTime(currentTime, times.gameLength);
+
+              if (
+                !teamTimeSlots[team1].some(
+                  (slot) =>
+                    slot.startTime < endTime && slot.endTime > currentTime
+                ) &&
+                !teamTimeSlots[team2].some(
+                  (slot) =>
+                    slot.startTime < endTime && slot.endTime > currentTime
+                )
+              ) {
+                games.push({
+                  team1,
+                  team2,
+                  court: courtIndex,
+                  startTime: currentTime,
+                  endTime: endTime,
+                  round: Math.floor(gameIndex / courts) + 1,
+                });
+
+                teamGameCounts[team1]++;
+                teamGameCounts[team2]++;
+                playedMatches.add(matchKey);
+
+                teamTimeSlots[team1].push({
+                  startTime: currentTime,
+                  endTime: endTime,
+                });
+                teamTimeSlots[team2].push({
+                  startTime: currentTime,
+                  endTime: endTime,
+                });
+
+                availableTeams = availableTeams.filter(
+                  (team) => team !== team1 && team !== team2
+                );
+                gameScheduled = true;
+                gameIndex++;
+                break;
+              }
+            }
+          }
         }
-
-        if (numTeams % 2 === 0 && gamesInRound === courts * (numTeams / 2)) {
-          roundIndex++;
-          currentTime = times.startTime;
-          gameIndex = 0;
-          gamesInRound = 0;
-        } else if (
-          numTeams % 2 !== 0 &&
-          gamesInRound === courts * ((numTeams - 1) / 2)
-        ) {
-          roundIndex++;
-          currentTime = times.startTime;
-          gameIndex = 0;
-          gamesInRound = 0;
+        if (gameScheduled) {
+          break;
         }
       }
+      courtIndex++;
     }
+    currentTime = calculateNextStartTime(
+      calculateEndTime(currentTime, times.gameLength),
+      times.timeBetweenGames
+    );
   }
 
   return games;
 };
 
-/**
- * Calculates the end time of a game based on the start time and game length.
- *
- * @param {string} startTime - The start time of the game in "HH:MM" format.
- * @param {number} gameLength - The length of the game in minutes.
- * @returns {string} - The end time of the game in "HH:MM" format.
- */
 const calculateEndTime = (startTime: string, gameLength: number): string => {
   const [hours, minutes] = startTime.split(":").map(Number);
   const totalMinutes = hours * 60 + minutes + gameLength;
@@ -138,13 +114,6 @@ const calculateEndTime = (startTime: string, gameLength: number): string => {
   )}`;
 };
 
-/**
- * Calculates the start time of the next game based on the end time of the previous game and the time between games.
- *
- * @param {string} endTime - The end time of the previous game in "HH:MM" format.
- * @param {number} timeBetweenGames - The time between games in minutes.
- * @returns {string} - The start time of the next game in "HH:MM" format.
- */
 const calculateNextStartTime = (
   endTime: string,
   timeBetweenGames: number
