@@ -7,6 +7,7 @@ import { PlaceholdersInput } from "./components/ui/placeholders-input";
 import { AppState, Game, InputState, ScheduleInput } from "./lib/types/types";
 import { generateSchedule } from "./lib/helpers/generateSchedule";
 import ScheduleTable from "./components/ScheduleTable";
+import { exportScheduleToPdf } from "./lib/helpers/exportScheduleToPDF";
 
 function App() {
   const [appState, setAppState] = useState<AppState>(AppState.LandingPage);
@@ -151,6 +152,10 @@ function App() {
     setScheduleInput(updatedScheduleInput);
     setNumberOfGamesPerTeam(0);
     setInputState(InputState.Completed);
+  };
+
+  const handleExportToPDF = () => {
+    exportScheduleToPdf(schedule);
   };
 
   return (
@@ -324,6 +329,12 @@ function App() {
             </h3>
 
             <ScheduleTable games={schedule} />
+
+            <Button className="h-12" onClick={handleExportToPDF}>
+              <text className="text-white font-bold text-xl px-12 py-8">
+                EXPORT TO PDF
+              </text>
+            </Button>
 
             <Button className="h-12" onClick={handleExit}>
               <text className="text-white font-bold text-xl px-12 py-8">

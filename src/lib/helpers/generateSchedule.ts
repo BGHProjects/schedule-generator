@@ -18,8 +18,8 @@ export const generateSchedule = (input: ScheduleInput): Game[] => {
 
   const playedMatches: Set<string> = new Set();
   const teamTimeSlots: {
-    [team: string]: { startTime: string; endTime: string }[];
-  } = {};
+    [team: string]: { startTime: string; endTime: string; court: number }[];
+  } = {}; //track courts
   teams.forEach((team) => (teamTimeSlots[team] = []));
 
   let gameIndex = 0;
@@ -46,6 +46,15 @@ export const generateSchedule = (input: ScheduleInput): Game[] => {
             if (!playedMatches.has(matchKey)) {
               const endTime = calculateEndTime(currentTime, times.gameLength);
 
+              const team1PrevCourt =
+                teamTimeSlots[team1].length > 0
+                  ? teamTimeSlots[team1][teamTimeSlots[team1].length - 1].court
+                  : 0;
+              const team2PrevCourt =
+                teamTimeSlots[team2].length > 0
+                  ? teamTimeSlots[team2][teamTimeSlots[team2].length - 1].court
+                  : 0;
+
               if (
                 !teamTimeSlots[team1].some(
                   (slot) =>
@@ -54,7 +63,9 @@ export const generateSchedule = (input: ScheduleInput): Game[] => {
                 !teamTimeSlots[team2].some(
                   (slot) =>
                     slot.startTime < endTime && slot.endTime > currentTime
-                )
+                ) &&
+                courtIndex !== team1PrevCourt &&
+                courtIndex !== team2PrevCourt
               ) {
                 games.push({
                   team1,
@@ -72,10 +83,12 @@ export const generateSchedule = (input: ScheduleInput): Game[] => {
                 teamTimeSlots[team1].push({
                   startTime: currentTime,
                   endTime: endTime,
+                  court: courtIndex,
                 });
                 teamTimeSlots[team2].push({
                   startTime: currentTime,
                   endTime: endTime,
+                  court: courtIndex,
                 });
 
                 availableTeams = availableTeams.filter(
