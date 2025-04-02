@@ -1,4 +1,4 @@
-import { ScheduleInput, Game } from "../types/types";
+import { ScheduleInput, Game, Team } from "../types/types";
 
 export const generateSchedule = (input: ScheduleInput): Game[] => {
   const { teams, times, courts, gamesPerTeam } = input;
@@ -9,111 +9,181 @@ export const generateSchedule = (input: ScheduleInput): Game[] => {
     return [];
   }
 
-  let targetGamesPerTeam =
+  const targetGamesPerTeam =
     gamesPerTeam === "FILL" ? numTeams - 1 : Number(gamesPerTeam);
-  targetGamesPerTeam = Math.min(targetGamesPerTeam, numTeams - 1);
+  const maxGamesPerTeam = Math.min(targetGamesPerTeam, numTeams - 1);
 
-  const teamGameCounts: { [team: string]: number } = {};
-  teams.forEach((team) => (teamGameCounts[team] = 0));
+  const teamGameCounts: { [teamName: string]: number } = {};
+  teams.forEach((team) => (teamGameCounts[team.name] = 0));
 
   const playedMatches: Set<string> = new Set();
   const teamTimeSlots: {
-    [team: string]: { startTime: string; endTime: string; court: number }[];
-  } = {}; //track courts
-  teams.forEach((team) => (teamTimeSlots[team] = []));
+    [teamName: string]: { startTime: string; endTime: string; court: number }[];
+  } = {};
+  teams.forEach((team) => (teamTimeSlots[team.name] = []));
 
+  // @ts-ignore
   let gameIndex = 0;
   let currentTime = times.startTime;
+  const maxRounds = Math.ceil((maxGamesPerTeam * numTeams) / (2 * courts)) * 2; // Estimate max rounds needed
 
-  while (teams.some((team) => teamGameCounts[team] < targetGamesPerTeam)) {
+  // Iterate over rounds instead of while loop
+  for (let round = 0; round < maxRounds; round++) {
     let availableTeams = [...teams];
-    let courtIndex = 1;
+    let gamesScheduledThisRound = 0;
 
-    while (courtIndex <= courts && availableTeams.length >= 2) {
+    // Iterate over courts instead of while loop
+    for (let courtIndex = 1; courtIndex <= courts; courtIndex++) {
+      if (availableTeams.length < 2) {
+        break;
+      }
+
       let gameScheduled = false;
 
-      for (let i = 0; i < availableTeams.length; i++) {
-        for (let j = i + 1; j < availableTeams.length; j++) {
+      // Try to schedule a game on this court
+      for (let i = 0; i < availableTeams.length && !gameScheduled; i++) {
+        for (let j = i + 1; j < availableTeams.length && !gameScheduled; j++) {
           const team1 = availableTeams[i];
           const team2 = availableTeams[j];
 
           if (
-            teamGameCounts[team1] < targetGamesPerTeam &&
-            teamGameCounts[team2] < targetGamesPerTeam
+            teamGameCounts[team1.name] >= maxGamesPerTeam ||
+            teamGameCounts[team2.name] >= maxGamesPerTeam
           ) {
-            const matchKey = [team1, team2].sort().join("-");
+            continue;
+          }
 
-            if (!playedMatches.has(matchKey)) {
-              const endTime = calculateEndTime(currentTime, times.gameLength);
+          const matchKey = [team1.name, team2.name].sort().join("-");
+          if (playedMatches.has(matchKey)) {
+            continue;
+          }
 
-              const team1PrevCourt =
-                teamTimeSlots[team1].length > 0
-                  ? teamTimeSlots[team1][teamTimeSlots[team1].length - 1].court
-                  : 0;
-              const team2PrevCourt =
-                teamTimeSlots[team2].length > 0
-                  ? teamTimeSlots[team2][teamTimeSlots[team2].length - 1].court
-                  : 0;
+          const endTime = calculateEndTime(currentTime, times.gameLength);
 
-              if (
-                !teamTimeSlots[team1].some(
-                  (slot) =>
-                    slot.startTime < endTime && slot.endTime > currentTime
-                ) &&
-                !teamTimeSlots[team2].some(
-                  (slot) =>
-                    slot.startTime < endTime && slot.endTime > currentTime
-                ) &&
-                courtIndex !== team1PrevCourt &&
-                courtIndex !== team2PrevCourt
-              ) {
-                games.push({
-                  team1,
-                  team2,
-                  court: courtIndex,
-                  startTime: currentTime,
-                  endTime: endTime,
-                  round: Math.floor(gameIndex / courts) + 1,
-                });
+          // Check time availability including unavailableBefore/After
+          const team1Available = isTeamAvailable(
+            team1,
+            currentTime,
+            endTime,
+            teamTimeSlots
+          );
+          const team2Available = isTeamAvailable(
+            team2,
+            currentTime,
+            endTime,
+            teamTimeSlots
+          );
 
-                teamGameCounts[team1]++;
-                teamGameCounts[team2]++;
-                playedMatches.add(matchKey);
+          const team1PrevCourt =
+            teamTimeSlots[team1.name].length > 0
+              ? teamTimeSlots[team1.name][teamTimeSlots[team1.name].length - 1]
+                  .court
+              : 0;
+          const team2PrevCourt =
+            teamTimeSlots[team2.name].length > 0
+              ? teamTimeSlots[team2.name][teamTimeSlots[team2.name].length - 1]
+                  .court
+              : 0;
 
-                teamTimeSlots[team1].push({
-                  startTime: currentTime,
-                  endTime: endTime,
-                  court: courtIndex,
-                });
-                teamTimeSlots[team2].push({
-                  startTime: currentTime,
-                  endTime: endTime,
-                  court: courtIndex,
-                });
+          if (
+            team1Available &&
+            team2Available &&
+            courtIndex !== team1PrevCourt &&
+            courtIndex !== team2PrevCourt
+          ) {
+            games.push({
+              team1: team1.name,
+              team2: team2.name,
+              court: courtIndex,
+              startTime: currentTime,
+              endTime: endTime,
+              round: round + 1,
+            });
 
-                availableTeams = availableTeams.filter(
-                  (team) => team !== team1 && team !== team2
-                );
-                gameScheduled = true;
-                gameIndex++;
-                break;
-              }
-            }
+            teamGameCounts[team1.name]++;
+            teamGameCounts[team2.name]++;
+            playedMatches.add(matchKey);
+
+            teamTimeSlots[team1.name].push({
+              startTime: currentTime,
+              endTime,
+              court: courtIndex,
+            });
+            teamTimeSlots[team2.name].push({
+              startTime: currentTime,
+              endTime,
+              court: courtIndex,
+            });
+
+            availableTeams = availableTeams.filter(
+              (team) => team.name !== team1.name && team.name !== team2.name
+            );
+            gameScheduled = true;
+            gamesScheduledThisRound++;
+            gameIndex++;
           }
         }
-        if (gameScheduled) {
-          break;
-        }
       }
-      courtIndex++;
     }
-    currentTime = calculateNextStartTime(
-      calculateEndTime(currentTime, times.gameLength),
-      times.timeBetweenGames
-    );
+
+    // Move to next time slot if any games were scheduled or if we need to try again
+    if (gamesScheduledThisRound > 0 || availableTeams.length >= 2) {
+      currentTime = calculateNextStartTime(
+        calculateEndTime(currentTime, times.gameLength),
+        times.timeBetweenGames
+      );
+    } else {
+      break;
+    }
+
+    // Early exit if all teams have enough games
+    if (teams.every((team) => teamGameCounts[team.name] >= maxGamesPerTeam)) {
+      break;
+    }
   }
 
   return games;
+};
+
+// Helper function to check team availability including unavailableBefore/After
+const isTeamAvailable = (
+  team: Team,
+  startTime: string,
+  endTime: string,
+  teamTimeSlots: {
+    [teamName: string]: { startTime: string; endTime: string; court: number }[];
+  }
+): boolean => {
+  const timeToMinutes = (time: string) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const startMinutes = timeToMinutes(startTime);
+  const endMinutes = timeToMinutes(endTime);
+
+  // Check unavailableBefore
+  if (team.unavailableBefore) {
+    const unavailableBeforeMinutes = timeToMinutes(team.unavailableBefore);
+    if (startMinutes < unavailableBeforeMinutes) {
+      return false;
+    }
+  }
+
+  // Check unavailableAfter
+  if (team.unavailableAfter) {
+    const unavailableAfterMinutes = timeToMinutes(team.unavailableAfter);
+    if (endMinutes > unavailableAfterMinutes) {
+      return false;
+    }
+  }
+
+  // Check existing time slots
+  return !teamTimeSlots[team.name].some(
+    (slot) =>
+      timeToMinutes(slot.startTime) < endMinutes &&
+      timeToMinutes(slot.endTime) > startMinutes
+  );
 };
 
 const calculateEndTime = (startTime: string, gameLength: number): string => {

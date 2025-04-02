@@ -1,3 +1,4 @@
+import { colours } from "@/lib/consts/colors";
 import { Game } from "@/lib/types/types";
 import React from "react";
 
@@ -36,31 +37,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ games }) => {
   const teams = Array.from(
     new Set(games.flatMap((game) => [game.team1, game.team2]))
   );
-  const colors = [
-    "bg-red-700",
-    "bg-blue-700",
-    "bg-green-700",
-    "bg-yellow-700",
-    "bg-purple-700",
-    "bg-indigo-700",
-    "bg-pink-700",
-    "bg-teal-700",
-    "bg-orange-700",
-    "bg-lime-700",
-    "bg-cyan-700",
-    "bg-fuchsia-700",
-    "bg-rose-700",
-    "bg-violet-700",
-    "bg-sky-700",
-    "bg-emerald-700",
-    "bg-amber-700",
-    "bg-zinc-700",
-    "bg-slate-700",
-    "bg-stone-700",
-  ];
+
   const teamColors: { [team: string]: string } = {};
+
   teams.forEach((team, index) => {
-    teamColors[team] = colors[index % colors.length];
+    teamColors[team] = colours[index % colours.length];
   });
 
   return (
@@ -101,16 +82,22 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ games }) => {
                     {game && (
                       <div className="flex flex-col items-center">
                         <div
-                          className={`p-1 rounded-md ${
+                          className={`p-1 rounded-md bg-[${
                             teamColors[game.team1]
-                          } text-white font-bold mb-1 w-full text-center`}
+                          }] text-white font-bold mb-1 w-full text-center`}
+                          style={{
+                            backgroundColor: `${teamColors[game.team1]}`,
+                          }}
                         >
                           {game.team1}
                         </div>
                         <div
-                          className={`p-1 rounded-md ${
+                          className={`p-1 rounded-md bg-[${
                             teamColors[game.team2]
-                          } text-white font-bold w-full text-center`}
+                          }] text-white font-bold w-full text-center`}
+                          style={{
+                            backgroundColor: `${teamColors[game.team2]}`,
+                          }}
                         >
                           {game.team2}
                         </div>

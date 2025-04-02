@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { Game } from "../types/types";
+import { colours } from "../consts/colors";
 
 export const exportScheduleToPdf = (games: Game[]) => {
   if (!games || games.length === 0) {
@@ -33,52 +34,68 @@ export const exportScheduleToPdf = (games: Game[]) => {
   const teams = Array.from(
     new Set(games.flatMap((game) => [game.team1, game.team2]))
   );
-  const colors = [
-    "#dc2626", // red-700
-    "#2563eb", // blue-700
-    "#16a34a", // green-700
-    "#facc15", // yellow-700
-    "#9333ea", // purple-700
-    "#4f46e5", // indigo-700
-    "#ec4899", // pink-700
-    "#14b8a6", // teal-700
-    "#f97316", // orange-700
-    "#84cc16", // lime-700
-    "#06b6d4", // cyan-700
-    "#d946ef", // fuchsia-700
-    "#f43f5e", // rose-700
-    "#8b5cf6", // violet-700
-    "#38bdf8", // sky-700
-    "#10b981", // emerald-700
-    "#f59e0b", // amber-700
-    "#52525b", // zinc-700
-    "#475569", // slate-700
-    "#57534e", // stone-700
-  ];
+
   const teamColors: { [team: string]: string } = {};
   teams.forEach((team, index) => {
-    teamColors[team] = colors[index % colors.length];
+    teamColors[team] = colours[index % colours.length];
   });
 
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 10;
-  const colWidth = (pageWidth - 2 * margin) / (uniqueCourts.length + 1); // +1 for time column
-  const rowHeight = 35; // Increased row height for padding
-  let y = margin;
+  const timeColWidth = 30;
+  const courtColWidth =
+    (pageWidth - 2 * margin - timeColWidth) / uniqueCourts.length;
+  const rowHeight = 25;
+  const headerHeight = 15; // Space for headers
+  const maxY = pageHeight - margin; // Usable height per page
+  let y = margin + headerHeight;
 
-  // Headers
-  doc.setFontSize(12);
-  doc.text("Time", margin, y + 10);
-  uniqueCourts.forEach((court, index) => {
-    doc.text(`Court ${court}`, margin + (index + 1) * colWidth, y + 10);
-  });
-  y += rowHeight;
+  // Function to draw headers
+  const drawHeaders = () => {
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("TIME", margin + timeColWidth / 2, margin + 10, {
+      align: "center",
+    });
+    uniqueCourts.forEach((court, index) => {
+      doc.text(
+        `COURT ${court}`.toUpperCase(),
+        margin + timeColWidth + index * courtColWidth + courtColWidth / 2,
+        margin + 10,
+        { align: "center" }
+      );
+    });
+  };
+
+  // Draw headers on the first page
+  drawHeaders();
 
   // Rows
-  uniqueTimes.forEach((time) => {
+  uniqueTimes.forEach((time, rowIndex) => {
+    // Check if the next row will exceed the page height
+    if (y + rowHeight > maxY) {
+      doc.addPage();
+      y = margin + headerHeight; // Reset y for new page
+      drawHeaders(); // Redraw headers on new page
+    }
+
+    // Grey background with rounded corners for odd rows
+    if (rowIndex % 2 !== 0) {
+      doc.setFillColor(240, 240, 240);
+      doc.roundedRect(margin, y, pageWidth - 2 * margin, rowHeight, 3, 3, "F");
+    }
+
+    // Time text: Centered and bold
     doc.setFontSize(10);
-    doc.text(time, margin, y + rowHeight / 2); // Center vertically in time cell
+    doc.setFont("helvetica", "bold");
+    doc.text(time, margin + timeColWidth / 2, y + rowHeight / 2, {
+      align: "center",
+      baseline: "middle",
+    });
+    doc.setFont("helvetica", "normal");
+
     uniqueCourts.forEach((court, index) => {
       const game = scheduleMap[time][court];
       if (game) {
@@ -88,10 +105,10 @@ export const exportScheduleToPdf = (games: Game[]) => {
         // Team 1 box
         doc.setFillColor(team1Color);
         doc.roundedRect(
-          margin + (index + 1) * colWidth + 4,
-          y + 4,
-          colWidth - 8,
-          rowHeight / 2 - 8,
+          margin + timeColWidth + index * courtColWidth + 4,
+          y + 2,
+          courtColWidth - 8,
+          rowHeight / 2 - 2,
           3,
           3,
           "F"
@@ -101,18 +118,18 @@ export const exportScheduleToPdf = (games: Game[]) => {
         doc.setFont("helvetica", "bold");
         doc.text(
           game.team1,
-          margin + (index + 1) * colWidth + colWidth / 2,
-          y + rowHeight / 4,
+          margin + timeColWidth + index * courtColWidth + courtColWidth / 2,
+          y + rowHeight / 4 + 1,
           { align: "center", baseline: "middle" }
         );
 
         // Team 2 box
         doc.setFillColor(team2Color);
         doc.roundedRect(
-          margin + (index + 1) * colWidth + 4,
-          y + rowHeight / 2 + 4,
-          colWidth - 8,
-          rowHeight / 2 - 8,
+          margin + timeColWidth + index * courtColWidth + 4,
+          y + rowHeight / 2 + 1,
+          courtColWidth - 8,
+          rowHeight / 2 - 2,
           3,
           3,
           "F"
@@ -121,13 +138,13 @@ export const exportScheduleToPdf = (games: Game[]) => {
         doc.setFont("helvetica", "bold");
         doc.text(
           game.team2,
-          margin + (index + 1) * colWidth + colWidth / 2,
+          margin + timeColWidth + index * courtColWidth + courtColWidth / 2,
           y + rowHeight * 0.75,
           { align: "center", baseline: "middle" }
         );
 
-        doc.setTextColor("#000000"); // set text color back to black
-        doc.setFont("helvetica", "normal"); // reset font weight
+        doc.setTextColor("#000000");
+        doc.setFont("helvetica", "normal");
       }
     });
     y += rowHeight;

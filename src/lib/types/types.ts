@@ -1,5 +1,5 @@
 export interface ScheduleInput {
-  teams: string[];
+  teams: Team[];
   times: { startTime: string; gameLength: number; timeBetweenGames: number };
   courts: number;
   gamesPerTeam: number | string;
@@ -26,4 +26,11 @@ export interface Game {
   startTime: string;
   endTime: string;
   round: number;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  unavailableBefore?: string;
+  unavailableAfter?: string;
 }
