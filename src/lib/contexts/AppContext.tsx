@@ -2,6 +2,7 @@ import React, { createContext, ReactNode, useState, useEffect } from "react";
 import { exportScheduleToPdf } from "../helpers/exportScheduleToPDF";
 import { generateSchedule } from "../helpers/generateSchedule";
 import { AppState, InputState, ScheduleInput, Game } from "../types/types";
+import { groupGamesByTeam } from "../helpers/groupGamesByTeam";
 
 interface AppContextProps {
   appState: AppState;
@@ -15,6 +16,7 @@ interface AppContextProps {
   handleStartScheduleGenerationInput: () => void;
   handleExit: () => void;
   handleExportToPDF: () => void;
+  scheduleByTeam: Record<string, Game[]>;
 }
 
 export const AppContext = createContext<AppContextProps>({} as AppContextProps);
@@ -26,15 +28,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [inputState, setInputState] = useState<InputState>(InputState.Teams);
   const [scheduleInput, setScheduleInput] = useState<ScheduleInput>({
     teams: [],
-    times: { startTime: "09:00", gameLength: 30, timeBetweenGames: 5 },
-    courts: 1,
-    gamesPerTeam: 1,
+    times: { startTime: "", gameLength: 0, timeBetweenGames: 0 },
+    courts: 0,
+    gamesPerTeam: 0,
   });
   const [schedule, setSchedule] = useState<Game[]>([]);
+  const [scheduleByTeam, setScheduleByTeam] = useState<Record<string, Game[]>>(
+    {}
+  );
 
   useEffect(() => {
     if (inputState === InputState.Completed) {
       const generatedSchedule = generateSchedule(scheduleInput);
+      const scheduleGroupedByTeam = groupGamesByTeam(generatedSchedule);
+      setScheduleByTeam(scheduleGroupedByTeam);
+
       setSchedule(generatedSchedule);
       setAppState(AppState.Generated);
     }
@@ -43,9 +51,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const resetScheduleInput = () => {
     setScheduleInput({
       teams: [],
-      times: { startTime: "09:00", gameLength: 30, timeBetweenGames: 5 },
-      courts: 1,
-      gamesPerTeam: 1,
+      times: { startTime: "", gameLength: 0, timeBetweenGames: 0 },
+      courts: 0,
+      gamesPerTeam: 0,
     });
   };
 
@@ -77,6 +85,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     handleStartScheduleGenerationInput,
     handleExit,
     handleExportToPDF,
+    scheduleByTeam,
   };
 
   return (

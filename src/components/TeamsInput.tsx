@@ -1,86 +1,3 @@
-// import React, { useContext, useState } from "react";
-// import { Button } from "./ui/button";
-// import { PlaceholdersAndVanishInput } from "./ui/placeholders-and-vanish-input";
-// import { InputState } from "../lib/types/types";
-// import { AppContext } from "@/lib/contexts/AppContext";
-
-// const TeamsInput: React.FC = () => {
-//   const { scheduleInput, setScheduleInput, setInputState, inputState } =
-//     useContext(AppContext) || {};
-//   const [currentTeamInput, setCurrentTeamInput] = useState("");
-
-//   if (!scheduleInput || !setScheduleInput || !setInputState) {
-//     return <div>Loading...</div>;
-//   }
-
-//   const teamInputPlaceholders = [
-//     "Enter Team Name Here",
-//     "This is where you enter the name of the team",
-//   ];
-
-//   const handleChangeTeamInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setCurrentTeamInput(e.target.value);
-//   };
-
-//   const onSubmitTeamInput = (e: React.FormEvent<HTMLFormElement>) => {
-//     e.preventDefault();
-//     const updatedScheduleInput = {
-//       ...scheduleInput,
-//       teams: [...scheduleInput.teams, currentTeamInput],
-//     };
-//     setScheduleInput(updatedScheduleInput);
-//     setCurrentTeamInput("");
-//   };
-
-//   if (inputState !== InputState.Teams) return null;
-
-//   return (
-//     <div className="flex flex-col space-y-4">
-//       <h3 className="text-white text-xl md:text-6xl font-bold text-center">
-//         Teams
-//       </h3>
-//       <div className="flex flex-row space-x-8">
-//         <div className="flex flex-col space-y-4">
-//           <p className="text-white text-sm md:text-2xl max-w-xl mt-6 text-center">
-//             Enter the teams that will be competing
-//           </p>
-//           <PlaceholdersAndVanishInput
-//             placeholders={teamInputPlaceholders}
-//             onChange={handleChangeTeamInput}
-//             onSubmit={onSubmitTeamInput}
-//           />
-//           <Button
-//             className="h-12 mb-4"
-//             onClick={() => setInputState(InputState.Times)}
-//           >
-//             <text className="text-white font-bold text-xl px-12 py-8">
-//               NEXT
-//             </text>
-//           </Button>
-//         </div>
-//         <div className="flex flex-col space-y-4">
-//           <text className="text-white text-sm md:text-2xl max-w-xl mt-6 text-center">
-//             Number of Teams: {scheduleInput.teams.length}
-//           </text>
-//           <text className="text-white text-sm md:text-2xl max-w-xl mt-6 text-center">
-//             Current Teams:
-//           </text>
-//           {scheduleInput.teams.map((team) => (
-//             <text
-//               className="text-white text-lg max-w-xl mt-1 text-center pl-2"
-//               key={team}
-//             >
-//               {team}
-//             </text>
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default TeamsInput;
-
 import { AppContext } from "@/lib/contexts/AppContext";
 import { Clock, X } from "lucide-react";
 import React, { useContext, useState } from "react";
@@ -158,8 +75,8 @@ const TeamsInput: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <Card className="max-w-2xl mx-auto">
+    <div className="container mx-auto py-10 align-center max-w-2xl">
+      <Card className="w-full mx-auto">
         <CardHeader>
           <CardTitle className="text-xl md:text-3xl">Teams</CardTitle>
           <CardDescription>

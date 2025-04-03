@@ -1,8 +1,15 @@
 import React, { useContext, useState } from "react";
-import { Button } from "./ui/button";
-import { PlaceholdersInput } from "./ui/placeholders-input";
-import { InputState } from "../lib/types/types";
 import { AppContext } from "../lib/contexts/AppContext";
+import { InputState } from "../lib/types/types";
+import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Input } from "./ui/input";
 
 const CourtsInput: React.FC = () => {
   const { scheduleInput, setScheduleInput, setInputState, inputState } =
@@ -12,8 +19,6 @@ const CourtsInput: React.FC = () => {
   if (!scheduleInput || !setScheduleInput || !setInputState) {
     return <div>Loading...</div>;
   }
-
-  const courtNumberPlaceholders = ["Enter the number of courts available"];
 
   const handleCourtNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNumberOfCourts(Number(e.target.value));
@@ -28,19 +33,32 @@ const CourtsInput: React.FC = () => {
   if (inputState !== InputState.Courts) return null;
 
   return (
-    <div className="flex flex-col space-y-4 max-w-[450px] w-[100%]">
-      <h3 className="text-white text-xl md:text-6xl font-bold text-center">
-        Courts
-      </h3>
-      <p className="text-white text-sm md:text-2xl max-w-xl mt-6 text-center">
-        How many courts are available to play on?
-      </p>
-      <PlaceholdersInput
-        placeholders={courtNumberPlaceholders}
-        onChange={handleCourtNumberInput}
-      />
-      <Button className="h-12 mb-4" onClick={onSubmitCourts}>
-        <text className="text-white font-bold text-xl px-12 py-8">NEXT</text>
+    <div className="container mx-auto py-10 max-w-2xl">
+      <Card className="w-full mx-auto">
+        <CardHeader>
+          <CardTitle className="text-xl md:text-3xl">Courts</CardTitle>
+          <CardDescription>
+            How many courts are available to play on?
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Input
+                id="timeBetweenGames"
+                placeholder="Enter the number of courts available"
+                onChange={handleCourtNumberInput}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Button
+        className="w-full h-12 mt-12"
+        onClick={onSubmitCourts}
+        disabled={!numberOfCourts}
+      >
+        <span className="text-white font-bold text-xl">NEXT</span>
       </Button>
     </div>
   );

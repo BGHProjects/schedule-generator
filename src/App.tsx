@@ -2,13 +2,13 @@ import React, { useContext } from "react";
 import "./App.css";
 import CourtsInput from "./components/CourtsInput";
 import RoundsInput from "./components/RoundsInput";
-import ScheduleTable from "./components/ScheduleTable";
 import TeamsInput from "./components/TeamsInput";
 import TimesInput from "./components/TimesInput";
 import { Button } from "./components/ui/button";
 import { Vortex } from "./components/ui/vortex";
 import { AppContext } from "./lib/contexts/AppContext";
 import { AppState } from "./lib/types/types";
+import { ScheduleTabs } from "./components/ScheduleTabs";
 
 function App() {
   const {
@@ -69,25 +69,11 @@ function App() {
         )}
 
         {appState === AppState.Generated && (
-          <div className="flex flex-col space-y-4">
-            <h3 className="text-white text-xl md:text-6xl font-bold text-center">
-              Here is your schedule
-            </h3>
-
-            <ScheduleTable games={schedule} />
-
-            <Button className="h-12" onClick={handleExportToPDF}>
-              <text className="text-white font-bold text-xl px-12 py-8">
-                EXPORT TO PDF
-              </text>
-            </Button>
-
-            <Button className="h-12 " onClick={handleExit}>
-              <text className="text-white font-bold text-xl px-12 py-8">
-                EXIT
-              </text>
-            </Button>
-          </div>
+          <ScheduleTabs
+            schedule={schedule}
+            handleExportToPDF={handleExportToPDF}
+            handleExit={handleExit}
+          />
         )}
       </Vortex>
     </div>

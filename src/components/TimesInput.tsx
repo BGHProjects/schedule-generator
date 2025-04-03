@@ -1,38 +1,30 @@
-import React, { useContext, useState } from "react";
-import { Button } from "./ui/button";
-import { PlaceholdersInput } from "./ui/placeholders-input";
-import { InputState } from "../lib/types/types";
 import { AppContext } from "@/lib/contexts/AppContext";
+import { Clock } from "lucide-react";
+import React, { useCallback, useContext, useState } from "react";
+import { InputState } from "../lib/types/types";
+import { TimeInput } from "./TimeInput";
+import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { convertTo24Hour } from "@/lib/helpers/convertTo24Hour";
 
 const TimesInput: React.FC = () => {
   const { scheduleInput, setScheduleInput, setInputState, inputState } =
     useContext(AppContext);
-  const [currentStartTimeInput, setCurrentStartTimeInput] = useState("09:00");
-  const [currentGameLength, setCurrentGameLength] = useState(30);
-  const [currentTimeBetweenGames, setCurrentTimeBetweenGames] = useState(5);
+  const [currentStartTimeInput, setCurrentStartTimeInput] = useState("");
+  const [currentGameLength, setCurrentGameLength] = useState(0);
+  const [currentTimeBetweenGames, setCurrentTimeBetweenGames] = useState(0);
 
   if (!scheduleInput || !setScheduleInput || !setInputState) {
     return <div>Loading...</div>;
   }
-
-  const startTimePlaceholders = [
-    "Enter the start time in HH:MM 24 hour format",
-    "e.g. 18:00 for a 6pm start",
-  ];
-
-  const gameLengthPlaceholders = [
-    "Enter the length of the game in minutes",
-    'e.g. "30" for a thirty minute game',
-  ];
-
-  const timeBetweenGamePlaceholders = [
-    "Enter the time between games in minutes",
-    'e.g. "5" for five minutes between games',
-  ];
-
-  const handleStartTimeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentStartTimeInput(e.target.value);
-  };
 
   const handleGameLengthInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentGameLength(Number(e.target.value));
@@ -41,14 +33,24 @@ const TimesInput: React.FC = () => {
   const handleTimeBetweenGamesInput = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
+    e.preventDefault();
     setCurrentTimeBetweenGames(Number(e.target.value));
   };
+
+  const handleStartTimeChange = useCallback(
+    (newValue: string) => {
+      if (newValue !== currentStartTimeInput) {
+        setCurrentStartTimeInput(newValue);
+      }
+    },
+    [currentStartTimeInput]
+  ); // Depend on current value to compare
 
   const onSubmitTimes = () => {
     const updatedScheduleInput = {
       ...scheduleInput,
       times: {
-        startTime: currentStartTimeInput,
+        startTime: convertTo24Hour(currentStartTimeInput),
         gameLength: currentGameLength,
         timeBetweenGames: currentTimeBetweenGames,
       },
@@ -57,36 +59,64 @@ const TimesInput: React.FC = () => {
     setInputState(InputState.Courts);
   };
 
+  const isInvalid =
+    !currentStartTimeInput || // Empty string
+    currentGameLength <= 0 || // Zero or negative
+    currentTimeBetweenGames < 0; // Negative (0 is okay for no break)
+
   if (inputState !== InputState.Times) return null;
 
   return (
-    <div className="flex flex-col space-y-4 max-w-[450px] w-[100%]">
-      <h3 className="text-white text-xl md:text-6xl font-bold text-center">
-        Times
-      </h3>
-      <p className="text-white text-sm md:text-2xl max-w-xl mt-6 text-center">
-        Start Time
-      </p>
-      <PlaceholdersInput
-        placeholders={startTimePlaceholders}
-        onChange={handleStartTimeInput}
-      />
-      <p className="text-white text-sm md:text-2xl max-w-xl mt-6 text-center">
-        Game Length
-      </p>
-      <PlaceholdersInput
-        placeholders={gameLengthPlaceholders}
-        onChange={handleGameLengthInput}
-      />
-      <p className="text-white text-sm md:text-2xl max-w-xl mt-6 text-center">
-        Time Between Games
-      </p>
-      <PlaceholdersInput
-        placeholders={timeBetweenGamePlaceholders}
-        onChange={handleTimeBetweenGamesInput}
-      />
-      <Button className="h-12 mb-4" onClick={onSubmitTimes}>
-        <text className="text-white font-bold text-xl px-12 py-8">NEXT</text>
+    <div className="container mx-auto py-10 max-w-2xl">
+      <Card className="w-full mx-auto">
+        <CardHeader>
+          <CardTitle className="text-xl md:text-3xl">Times</CardTitle>
+          <CardDescription>Enter the relevant time information</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label
+                htmlFor="unavailableBefore"
+                className="flex items-center gap-2"
+              >
+                <Clock className="h-4 w-4" />
+                <span>Start Time</span>
+              </Label>
+
+              <TimeInput
+                id="startTime"
+                value={currentStartTimeInput}
+                onChange={handleStartTimeChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gameLength">Game Length</Label>
+              <Input
+                id="gameLength"
+                placeholder="Enter the length of the game in minutes (e.g. 20 for twenty minute games)"
+                value={currentGameLength}
+                onChange={handleGameLengthInput}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="timeBetweenGames">Time Between Games</Label>
+              <Input
+                id="timeBetweenGames"
+                placeholder="Enter the time between games in minutes (e.g. 5 for five minutes between games)"
+                value={currentTimeBetweenGames}
+                onChange={handleTimeBetweenGamesInput}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Button
+        className="w-full h-12 mt-12"
+        onClick={onSubmitTimes}
+        disabled={isInvalid}
+      >
+        <span className="text-white font-bold text-xl">NEXT</span>
       </Button>
     </div>
   );

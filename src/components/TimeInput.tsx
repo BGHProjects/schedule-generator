@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-
 import { Input } from "@/components/ui/input";
-
 import {
   Select,
   SelectContent,
@@ -19,43 +17,33 @@ interface TimeInputProps {
 }
 
 export function TimeInput({ id, value, onChange }: TimeInputProps) {
-  const [hour, setHour] = useState("");
-  const [minute, setMinute] = useState("");
-  const [period, setPeriod] = useState("AM");
-
-  // Parse the time string when the value prop changes
-
-  useEffect(() => {
-    if (!value) {
-      setHour("");
-      setMinute("");
-      setPeriod("AM");
-      return;
-    }
-
+  // Initialize state from value prop only on first render
+  const [initialHour, initialMinute, initialPeriod] = React.useMemo(() => {
+    if (!value) return ["", "", "AM"];
     try {
       const [time, ampm] = value.split(" ");
       const [h, m] = time.split(":");
-      setHour(h);
-      setMinute(m);
-      setPeriod(ampm);
+      return [h, m, ampm];
     } catch (error) {
-      // Handle invalid time format
-
-      console.error("Invalid time format:", value);
+      console.error("Invalid initial time format:", value);
+      return ["", "", "AM"];
     }
-  }, [value]);
+  }, []); // Empty deps: only runs once on mount
 
-  // Update the parent component when any part of the time changes
+  const [hour, setHour] = useState(initialHour);
+  const [minute, setMinute] = useState(initialMinute);
+  const [period, setPeriod] = useState(initialPeriod);
 
+  // Send formatted time to parent when any part changes
   useEffect(() => {
     if (!hour || !minute) {
       onChange("");
       return;
     }
 
-    const formattedTime = `${hour}:${minute} ${period}`;
-
+    const formattedHour = hour.padStart(2, "0");
+    const formattedMinute = minute.padStart(2, "0");
+    const formattedTime = `${formattedHour}:${formattedMinute} ${period}`;
     onChange(formattedTime);
   }, [hour, minute, period, onChange]);
 
@@ -68,22 +56,19 @@ export function TimeInput({ id, value, onChange }: TimeInputProps) {
           value={hour}
           onChange={(e) => {
             const val = e.target.value;
-
             if (
               val === "" ||
               (/^\d+$/.test(val) &&
                 Number.parseInt(val) >= 1 &&
                 Number.parseInt(val) <= 12)
             ) {
-              setHour(val);
+              setHour(val); // Store raw input
             }
           }}
           maxLength={2}
         />
       </div>
-
       <span className="flex items-center">:</span>
-
       <div className="w-20">
         <Input
           id={`${id}-minute`}
@@ -91,28 +76,24 @@ export function TimeInput({ id, value, onChange }: TimeInputProps) {
           value={minute}
           onChange={(e) => {
             const val = e.target.value;
-
             if (
               val === "" ||
               (/^\d+$/.test(val) &&
                 Number.parseInt(val) >= 0 &&
                 Number.parseInt(val) <= 59)
             ) {
-              setMinute(val.padStart(2, "0"));
+              setMinute(val); // Store raw input
             }
           }}
           maxLength={2}
         />
       </div>
-
       <Select value={period} onValueChange={setPeriod}>
         <SelectTrigger className="w-20">
           <SelectValue placeholder="AM/PM" />
         </SelectTrigger>
-
         <SelectContent>
           <SelectItem value="AM">AM</SelectItem>
-
           <SelectItem value="PM">PM</SelectItem>
         </SelectContent>
       </Select>
