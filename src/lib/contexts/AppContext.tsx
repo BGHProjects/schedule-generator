@@ -16,7 +16,9 @@ interface AppContextProps {
   handleStartScheduleGenerationInput: () => void;
   handleExit: () => void;
   handleExportToPDF: () => void;
-  scheduleByTeam: Record<string, Game[]>;
+  scheduleByTeam: Record<string, { games: Game[]; colour: string }>;
+  currentlyViewedSchedule: Game[];
+  setCurrentlyViewedSchedule: React.Dispatch<React.SetStateAction<Game[]>>;
 }
 
 export const AppContext = createContext<AppContextProps>({} as AppContextProps);
@@ -33,9 +35,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     gamesPerTeam: 0,
   });
   const [schedule, setSchedule] = useState<Game[]>([]);
-  const [scheduleByTeam, setScheduleByTeam] = useState<Record<string, Game[]>>(
-    {}
-  );
+  const [scheduleByTeam, setScheduleByTeam] = useState<
+    Record<string, { games: Game[]; colour: string }>
+  >({});
+  const [currentlyViewedSchedule, setCurrentlyViewedSchedule] = useState<
+    Game[]
+  >([]);
 
   useEffect(() => {
     if (inputState === InputState.Completed) {
@@ -70,7 +75,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const handleExportToPDF = () => {
-    exportScheduleToPdf(schedule);
+    exportScheduleToPdf(currentlyViewedSchedule);
   };
 
   const contextValue: AppContextProps = {
@@ -86,6 +91,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     handleExit,
     handleExportToPDF,
     scheduleByTeam,
+    currentlyViewedSchedule,
+    setCurrentlyViewedSchedule,
   };
 
   return (

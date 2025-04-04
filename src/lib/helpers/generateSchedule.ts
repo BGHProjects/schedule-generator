@@ -92,8 +92,8 @@ export const generateSchedule = (input: ScheduleInput): Game[] => {
             courtIndex !== team2PrevCourt
           ) {
             games.push({
-              team1: team1.name,
-              team2: team2.name,
+              team1: { name: team1.name, colour: team1.colour },
+              team2: { name: team2.name, colour: team2.colour },
               court: courtIndex,
               startTime: currentTime,
               endTime: endTime,

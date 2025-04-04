@@ -10,15 +10,9 @@ import { AppContext } from "./lib/contexts/AppContext";
 import { AppState } from "./lib/types/types";
 import { ScheduleTabs } from "./components/ScheduleTabs";
 
-function App() {
-  const {
-    handleStartScheduleGenerationInput,
-    handleExit,
-    handleExportToPDF,
-    appState,
-    setAppState,
-    schedule,
-  } = useContext(AppContext) || {};
+const App = () => {
+  const { handleStartScheduleGenerationInput, appState, setAppState } =
+    useContext(AppContext);
 
   return (
     <div className="w-screen h-screen overflow-hidden">
@@ -68,16 +62,10 @@ function App() {
           </>
         )}
 
-        {appState === AppState.Generated && (
-          <ScheduleTabs
-            schedule={schedule}
-            handleExportToPDF={handleExportToPDF}
-            handleExit={handleExit}
-          />
-        )}
+        {appState === AppState.Generated && <ScheduleTabs />}
       </Vortex>
     </div>
   );
-}
+};
 
 export default App;

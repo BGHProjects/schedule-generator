@@ -1,6 +1,5 @@
 import jsPDF from "jspdf";
 import { Game } from "../types/types";
-import { colours } from "../consts/colors";
 
 export const exportScheduleToPdf = (games: Game[]) => {
   if (!games || games.length === 0) {
@@ -17,7 +16,10 @@ export const exportScheduleToPdf = (games: Game[]) => {
 
   const scheduleMap: {
     [time: string]: {
-      [court: number]: { team1: string; team2: string } | null;
+      [court: number]: {
+        team1: { name: string; colour: string };
+        team2: { name: string; colour: string };
+      } | null;
     };
   } = {};
   uniqueTimes.forEach((time) => {
@@ -29,15 +31,6 @@ export const exportScheduleToPdf = (games: Game[]) => {
       team1: game.team1,
       team2: game.team2,
     };
-  });
-
-  const teams = Array.from(
-    new Set(games.flatMap((game) => [game.team1, game.team2]))
-  );
-
-  const teamColors: { [team: string]: string } = {};
-  teams.forEach((team, index) => {
-    teamColors[team] = colours[index % colours.length];
   });
 
   const doc = new jsPDF();
@@ -99,8 +92,8 @@ export const exportScheduleToPdf = (games: Game[]) => {
     uniqueCourts.forEach((court, index) => {
       const game = scheduleMap[time][court];
       if (game) {
-        const team1Color = teamColors[game.team1];
-        const team2Color = teamColors[game.team2];
+        const team1Color = game.team1.colour;
+        const team2Color = game.team2.colour;
 
         // Team 1 box
         doc.setFillColor(team1Color);
@@ -117,7 +110,7 @@ export const exportScheduleToPdf = (games: Game[]) => {
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
         doc.text(
-          game.team1,
+          game.team1.name,
           margin + timeColWidth + index * courtColWidth + courtColWidth / 2,
           y + rowHeight / 4 + 1,
           { align: "center", baseline: "middle" }
@@ -137,7 +130,7 @@ export const exportScheduleToPdf = (games: Game[]) => {
         doc.setTextColor("#ffffff");
         doc.setFont("helvetica", "bold");
         doc.text(
-          game.team2,
+          game.team2.name,
           margin + timeColWidth + index * courtColWidth + courtColWidth / 2,
           y + rowHeight * 0.75,
           { align: "center", baseline: "middle" }

@@ -14,6 +14,7 @@ import {
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
+import { colours } from "@/lib/consts/colors";
 
 const TeamsInput: React.FC = () => {
   const { scheduleInput, setScheduleInput, setInputState, inputState } =
@@ -47,9 +48,13 @@ const TeamsInput: React.FC = () => {
       return;
     }
 
+    const colourIndex = scheduleInput.teams.length % colours.length;
+    const teamColour = colours[colourIndex];
+
     const newTeam: Team = {
       id: crypto.randomUUID(),
       name: currentTeamInput,
+      colour: teamColour,
       unavailableBefore: unavailableBefore || undefined,
       unavailableAfter: unavailableAfter || undefined,
     };

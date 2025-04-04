@@ -1,4 +1,3 @@
-import { colours } from "@/lib/consts/colors";
 import { Game } from "@/lib/types/types";
 import React from "react";
 
@@ -20,7 +19,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ games }) => {
 
   const scheduleMap: {
     [time: string]: {
-      [court: number]: { team1: string; team2: string } | null;
+      [court: number]: {
+        team1: { name: string; colour: string };
+        team2: { name: string; colour: string };
+      } | null;
     };
   } = {};
   uniqueTimes.forEach((time) => {
@@ -32,16 +34,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ games }) => {
       team1: game.team1,
       team2: game.team2,
     };
-  });
-
-  const teams = Array.from(
-    new Set(games.flatMap((game) => [game.team1, game.team2]))
-  );
-
-  const teamColors: { [team: string]: string } = {};
-
-  teams.forEach((team, index) => {
-    teamColors[team] = colours[index % colours.length];
   });
 
   return (
@@ -82,24 +74,20 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ games }) => {
                     {game && (
                       <div className="flex flex-col items-center">
                         <div
-                          className={`p-1 rounded-md bg-[${
-                            teamColors[game.team1]
-                          }] text-white font-bold mb-1 w-full text-center`}
+                          className={`p-1 rounded-md bg-[${game.team1.colour}] text-white font-bold mb-1 w-full text-center`}
                           style={{
-                            backgroundColor: `${teamColors[game.team1]}`,
+                            backgroundColor: `${game.team1.colour}`,
                           }}
                         >
-                          {game.team1}
+                          {game.team1.name}
                         </div>
                         <div
-                          className={`p-1 rounded-md bg-[${
-                            teamColors[game.team2]
-                          }] text-white font-bold w-full text-center`}
+                          className={`p-1 rounded-md bg-[${game.team2.colour}] text-white font-bold w-full text-center`}
                           style={{
-                            backgroundColor: `${teamColors[game.team2]}`,
+                            backgroundColor: `${game.team2.colour}`,
                           }}
                         >
-                          {game.team2}
+                          {game.team2.name}
                         </div>
                       </div>
                     )}

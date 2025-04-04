@@ -20,8 +20,8 @@ export enum InputState {
 }
 
 export interface Game {
-  team1: string;
-  team2: string;
+  team1: { name: string; colour: string };
+  team2: { name: string; colour: string };
   court: number;
   startTime: string;
   endTime: string;
@@ -31,6 +31,7 @@ export interface Game {
 export interface Team {
   id: string;
   name: string;
+  colour: string;
   unavailableBefore?: string;
   unavailableAfter?: string;
 }

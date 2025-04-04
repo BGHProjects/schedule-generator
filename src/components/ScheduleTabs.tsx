@@ -1,17 +1,18 @@
-import React from "react";
 import { Button } from "@/components/ui/button"; // Adjust path as needed
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; // Shadcn Tabs
-import { Game } from "@/lib/types/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Shadcn Tabs
+import { AppContext } from "@/lib/contexts/AppContext";
 import { groupGamesByTeam } from "@/lib/helpers/groupGamesByTeam";
+import React, { useContext } from "react";
 import ScheduleTable from "./ScheduleTable";
-import { colours } from "@/lib/consts/colors";
 
 // ScheduleTabs Component using shadcn Tabs
-export const ScheduleTabs: React.FC<{
-  schedule: Game[];
-  handleExportToPDF: () => void; // Changed from onExportToPDF
-  handleExit: () => void; // Changed from onExit
-}> = ({ schedule, handleExportToPDF, handleExit }) => {
+export const ScheduleTabs: React.FC = () => {
+  const {
+    schedule,
+    handleExportToPDF,
+    handleExit,
+    setCurrentlyViewedSchedule,
+  } = useContext(AppContext);
   const scheduleByTeam = groupGamesByTeam(schedule); // Generate team-specific schedules
   const teams = Object.keys(scheduleByTeam); // List of unique team names
 
@@ -23,27 +24,31 @@ export const ScheduleTabs: React.FC<{
 
       <Tabs defaultValue="FULL" className="w-full">
         {/* Tab Triggers */}
-        <TabsList className="flex flex-wrap justify-center gap-2">
+        <TabsList className="flex flex-wrap justify-center gap-2 w-full overflow-x-auto">
           {/* FULL Tab */}
           <TabsTrigger
             value="FULL"
-            className="bg-gray-500 text-white font-bold px-4 py-2 rounded-md cursor-pointer data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+            className="bg-gray-500 text-white font-bold px-4 py-2 rounded-md cursor-pointer data-[state=active]:bg-gray-700 data-[state=active]:text-white w-[15%]"
+            onClick={() => setCurrentlyViewedSchedule(schedule)}
           >
             FULL
           </TabsTrigger>
 
           {/* Team-specific Tabs with dynamic colors */}
-          {teams.map((team, index) => (
+          {teams.map((team) => (
             <TabsTrigger
               key={team}
               value={team}
               style={{
-                backgroundColor: colours[index] || "#ccc", // Use team's color or fallback to grey
+                backgroundColor: scheduleByTeam[team].colour, // Use team's color or fallback to grey
                 color: "#fff",
                 fontWeight: "bold",
                 cursor: "pointer",
               }}
-              className="px-4 py-2 rounded-md data-[state=active]:brightness-90"
+              className="px-4 py-2 rounded-md data-[state=active]:brightness-90 w-[15%]"
+              onClick={() =>
+                setCurrentlyViewedSchedule(scheduleByTeam[team].games)
+              }
             >
               {team}
             </TabsTrigger>
@@ -56,7 +61,7 @@ export const ScheduleTabs: React.FC<{
         </TabsContent>
         {teams.map((team) => (
           <TabsContent key={team} value={team}>
-            <ScheduleTable games={scheduleByTeam[team]} />
+            <ScheduleTable games={scheduleByTeam[team].games} />
           </TabsContent>
         ))}
       </Tabs>

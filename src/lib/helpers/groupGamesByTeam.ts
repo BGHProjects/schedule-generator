@@ -18,24 +18,26 @@ import { Game } from "../types/types";
  *   "Team C": [{...game2}]
  * }
  */
-export const groupGamesByTeam = (games: Game[]): { [team: string]: Game[] } => {
-  const teamGames: { [team: string]: Game[] } = {};
+export const groupGamesByTeam = (
+  games: Game[]
+): { [team: string]: { games: Game[]; colour: string } } => {
+  const teamGames: { [team: string]: { games: Game[]; colour: string } } = {};
 
   // Iterate through each game
   for (const game of games) {
     const { team1, team2 } = game;
 
     // Initialize arrays for teams if not already present
-    if (!teamGames[team1]) {
-      teamGames[team1] = [];
+    if (!teamGames[team1.name]) {
+      teamGames[team1.name] = { games: [], colour: team1.colour };
     }
-    if (!teamGames[team2]) {
-      teamGames[team2] = [];
+    if (!teamGames[team2.name]) {
+      teamGames[team2.name] = { games: [], colour: team2.colour };
     }
 
     // Add the game to both teams' arrays
-    teamGames[team1].push(game);
-    teamGames[team2].push(game);
+    teamGames[team1.name].games.push(game);
+    teamGames[team2.name].games.push(game);
   }
 
   return teamGames;
