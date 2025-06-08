@@ -6,9 +6,10 @@
   ],
   "compilerOptions": {
     "lib": ["dom", "esnext"],  // Add 'dom' here to include the DOM types
-    "baseUrl": ".",
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["*"]
+      
     },
     
   }

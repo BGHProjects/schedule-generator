@@ -1,4 +1,3 @@
-import { AppContext } from "@/lib/contexts/AppContext";
 import React, { useContext, useState } from "react";
 import { InputState } from "../lib/types/types";
 import { Button } from "./ui/button";
@@ -10,10 +9,11 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Input } from "./ui/input";
+import { AppContext } from "@/lib/contexts/AppContext";
 
 const RoundsInput: React.FC = () => {
   const { scheduleInput, setScheduleInput, setInputState, inputState } =
-    useContext(AppContext) || {};
+    useContext(AppContext);
   const [numberOfGamesPerTeam, setNumberOfGamesPerTeam] = useState(1);
 
   if (!scheduleInput || !setScheduleInput || !setInputState) {
